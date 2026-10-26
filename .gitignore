@@ -1,0 +1,6 @@
+build/src/
+build/output/
+build/xcframework-stage/
+build/*.tar.xz
+build/*.log
+BinaryDependencies/
