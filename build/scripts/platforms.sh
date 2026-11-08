@@ -27,5 +27,18 @@ platform_env() {
         *) echo "unknown platform: $platform" >&2; return 1 ;;
     esac
     SYSROOT="$(xcrun --sdk "$SDK" --show-sdk-path)"
-    export SDK TARGET FF_ARCH SYSROOT
+    # Metal shaders (yadif_videotoolbox) compile for the GPU, not the CPU: one
+    # AIR target per OS and simulator flavour, whatever the CPU arch. Left at
+    # FFmpeg's default the compiler targets macOS, and a library built for
+    # macOS does not load on tvOS or iOS.
+    local air_os
+    case "$TARGET" in
+        *-macosx*) air_os="macos${MACOS_MIN}" ;;
+        *-ios*)    air_os="ios${IOS_MIN}" ;;
+        *-tvos*)   air_os="tvos${TVOS_MIN}" ;;
+        *-xros*)   air_os="xros${XROS_MIN}" ;;
+    esac
+    METAL_TARGET="air64-apple-${air_os}"
+    case "$TARGET" in *-simulator) METAL_TARGET="${METAL_TARGET}-simulator" ;; esac
+    export SDK TARGET FF_ARCH SYSROOT METAL_TARGET
 }

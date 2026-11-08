@@ -9,6 +9,12 @@
 #  - LGPL only (no --enable-gpl), decode/demux only (no encoders/muxers)
 #  - --disable-autodetect for reproducible builds; SDK-provided deps enabled explicitly
 #  - VideoToolbox + AudioToolbox + SecureTransport (TLS without OpenSSL)
+#  - Metal, for yadif_videotoolbox: deinterlaces VideoToolbox frames on the
+#    GPU, with no copy to the CPU and back (the software deinterlacers cost a
+#    download, a CPU filter and an upload per frame — too much for an A12
+#    Apple TV at 1080i50 field rate). Needs Xcode's Metal toolchain
+#    (`xcodebuild -downloadComponent MetalToolchain` if `xcrun metal` fails);
+#    configure silently drops the filter without it, so it is checked below.
 #  - dav1d (BSD-2-Clause) for software AV1: FFmpeg's native AV1 decoder only
 #    drives hardware, which most Apple devices lack (build-dav1d.sh)
 set -euo pipefail
@@ -89,8 +95,16 @@ cd "$SRC_DIR"
     --enable-swscale \
     --enable-swresample \
     --enable-avfilter \
+    --enable-metal \
+    --metalcc="xcrun -sdk $SDK metal -target $METAL_TARGET" \
+    --metallib="xcrun -sdk $SDK metallib" \
     > "$BUILD_DIR/configure-$PLATFORM.log" 2>&1 || {
         echo "configure failed — tail of log:"; tail -40 "$BUILD_DIR/configure-$PLATFORM.log"; exit 1; }
+
+# configure disables an unmet dependency instead of failing, so a missing
+# Metal toolchain would quietly ship a build without the GPU deinterlacer.
+grep -q '^CONFIG_YADIF_VIDEOTOOLBOX_FILTER=yes' ffbuild/config.mak || {
+    echo "yadif_videotoolbox was not enabled — is the Metal toolchain installed? (xcrun -sdk $SDK metal -v)"; exit 1; }
 
 make -j"$JOBS" > "$BUILD_DIR/make-$PLATFORM.log" 2>&1 || {
     echo "make failed — tail of log:"; tail -40 "$BUILD_DIR/make-$PLATFORM.log"; exit 1; }

@@ -1,0 +1,32 @@
+Fix a crash and a leak in yadif_videotoolbox: call_kernel took the command
+buffer and compute encoder from methods that return autoreleased objects,
+then released them itself. Under manual reference counting that is one
+release too many: when the calling thread's autorelease pool drained (at
+thread exit, for a long-lived decode thread) it released freed objects and
+crashed, and until then every field's objects piled up in that pool. A pool
+per call frees them as soon as the GPU work is done, and nothing is released
+by hand.
+
+--- a/libavfilter/vf_yadif_videotoolbox.m
++++ b/libavfilter/vf_yadif_videotoolbox.m
+@@ -73,6 +73,9 @@
+                         int tff) API_AVAILABLE(macos(10.11), ios(8.0))
+ {
+     YADIFVTContext *s = ctx->priv;
++    // Both are autoreleased, not owned: a pool per call frees them now rather
++    // than at the calling thread's exit, and they must not be released here.
++    @autoreleasepool {
+     id<MTLCommandBuffer> buffer = s->mtlQueue.commandBuffer;
+     id<MTLComputeCommandEncoder> encoder = buffer.computeCommandEncoder;
+     struct mtlYadifParams *params = (struct mtlYadifParams *)s->mtlParamsBuffer.contents;
+@@ -95,9 +98,7 @@
+ 
+     [buffer commit];
+     [buffer waitUntilCompleted];
+-
+-    ff_objc_release(&encoder);
+-    ff_objc_release(&buffer);
++    }
+ }
+ 
+ static void filter(AVFilterContext *ctx, AVFrame *dst,
