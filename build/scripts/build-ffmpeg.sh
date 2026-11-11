@@ -17,6 +17,8 @@
 #    configure silently drops the filter without it, so it is checked below.
 #  - dav1d (BSD-2-Clause) for software AV1: FFmpeg's native AV1 decoder only
 #    drives hardware, which most Apple devices lack (build-dav1d.sh)
+#  - libass (ISC) with FreeType, FriBidi and HarfBuzz for ASS/SSA rendering,
+#    built alongside and merged into the same artifact (build-libass.sh)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -112,6 +114,23 @@ rm -rf "$PREFIX"
 make install >> "$BUILD_DIR/make-$PLATFORM.log" 2>&1
 # make-xcframework.sh merges every lib*.a in here into libffmpeg.a.
 cp "$DAV1D_PREFIX/lib/libdav1d.a" "$PREFIX/lib/"
+
+# libass and what it renders with: not linked into FFmpeg (its `ass` decoder
+# yields event text without them), but used by the engine directly to draw
+# ASS/SSA subtitles. Same artifact, same merged library; the headers go
+# under aether_ffmpeg/ass/ with FFmpeg's.
+"$SCRIPT_DIR/build-libass.sh" "$PLATFORM"
+for key in freetype fribidi harfbuzz libass; do
+    ver="$(python3 -c "import json;print(json.load(open('$BUILD_DIR/versions.json'))['$key']['version'])")"
+    lib_prefix="$BUILD_DIR/src/${key}-${ver}-${PLATFORM}/prefix"
+    for archive in "$lib_prefix"/lib/lib*.a; do
+        cp "$archive" "$PREFIX/lib/"
+    done
+    if [ "$key" = libass ]; then
+        mkdir -p "$PREFIX/include/ass"
+        cp "$lib_prefix"/include/ass/*.h "$PREFIX/include/ass/"
+    fi
+done
 
 echo "==> Installed to $PREFIX"
 ls "$PREFIX/lib"

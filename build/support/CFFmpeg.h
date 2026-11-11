@@ -43,6 +43,10 @@
 #include <aether_ffmpeg/libavfilter/buffersrc.h>
 #include <aether_ffmpeg/libavfilter/buffersink.h>
 
+/* libass (ISC), built with FreeType, FriBidi and HarfBuzz into the same
+   artifact (build-libass.sh) for ASS/SSA subtitle rendering. */
+#include <aether_ffmpeg/ass/ass.h>
+
 #include "CFFmpegShim.h"
 
 #endif /* CFFMPEG_UMBRELLA_H */

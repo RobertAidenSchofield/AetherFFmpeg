@@ -1,7 +1,7 @@
 # AetherFFmpeg
 
-Prebuilt FFmpeg 9.0.1 (with dav1d 1.5.4) as a static `FFmpeg.xcframework` for
-AetherEngine, the playback engine in the Aether IPTV player. Each GitHub release
+Prebuilt FFmpeg 9.0.1 (with dav1d 1.5.4, and libass 0.17.5 for subtitles) as a
+static `FFmpeg.xcframework` for AetherEngine, the playback engine in the Aether IPTV player. Each GitHub release
 carries one `FFmpeg.xcframework.zip`, which Swift Package Manager downloads as a
 binary target.
 
@@ -11,6 +11,12 @@ binary target.
   (SHA-256 checked against `build/versions.json`).
 - dav1d 1.5.4 from <https://downloads.videolan.org/pub/videolan/dav1d/1.5.4/>,
   for software AV1 decoding.
+- libass 0.17.5 with FreeType 2.15.0, FriBidi 1.0.18 and HarfBuzz 15.1.0, for
+  drawing ASS/SSA subtitles. They are not linked into FFmpeg; AetherEngine calls
+  libass directly, and the libraries ship in the same merged `libffmpeg.a`, with
+  libass's headers under `aether_ffmpeg/ass/`. Every optional dependency is off
+  (no fontconfig: fonts come from Core Text), and FreeType's HVF driver is off
+  because it needs symbols the SDKs don't ship (`build/scripts/build-libass.sh`).
 - Two patches in `build/patches/`:
   - `0001-visionos-videotoolbox-no-opengles.patch`: on visionOS, VideoToolbox
     asks for Metal-compatible pixel buffers, because the OpenGL ES keys don't
@@ -33,7 +39,8 @@ binary target.
 
 Requires Xcode with its Metal toolchain (`xcodebuild -downloadComponent
 MetalToolchain` if `xcrun metal -v` fails), `meson`, `ninja` and `nasm`
-(`brew install meson ninja nasm`).
+(`brew install meson ninja nasm`). `build-ffmpeg.sh` builds dav1d and the
+libass stack for its slice too.
 
 ```bash
 build/scripts/fetch-sources.sh
@@ -44,12 +51,17 @@ build/scripts/make-xcframework.sh     # writes BinaryDependencies/FFmpeg.xcframe
 swift package compute-checksum BinaryDependencies/FFmpeg.xcframework.zip
 ```
 
-A full build of all ten slices takes about 35 minutes on an Apple-silicon Mac.
+A full build of all ten slices takes about 45 minutes on an Apple-silicon Mac.
 
 ## Licenses
 
 FFmpeg is LGPL-2.1-or-later (`licenses/FFmpeg-COPYING.LGPLv2.1`,
 `licenses/FFmpeg-LICENSE.md`). dav1d is BSD-2-Clause (`licenses/dav1d-COPYING`).
-This repository contains the corresponding source: the upstream tarballs it
+libass is ISC (`licenses/libass-COPYING`). FreeType is used under the FreeType
+License, not its GPLv2 alternative (`licenses/freetype-LICENSE.TXT`,
+`licenses/freetype-FTL.TXT`). HarfBuzz is "Old MIT", and its Universal Shaping
+Engine tables are MIT from Microsoft (`licenses/harfbuzz-COPYING`,
+`licenses/harfbuzz-ms-use-COPYING`). FriBidi is LGPL-2.1-or-later
+(`licenses/fribidi-COPYING`). Nothing is GPL. This repository contains the corresponding source: the upstream tarballs it
 names, plus the patches and the build scripts. The build scripts are MIT, like
 AetherEngine.

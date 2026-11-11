@@ -10,8 +10,23 @@
     "sha256": "686616b7c69eb88d44459391ab25cac13b6647a3b288835c5784e71c1514a5c5"
   },
   "libass": {
-    "version": "0.17.4",
-    "url": "https://github.com/libass/libass/releases/download/0.17.4/libass-0.17.4.tar.xz",
-    "status": "planned"
+    "version": "0.17.5",
+    "url": "https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz",
+    "sha256": "2dca25c0e0c837ddf00b52011b3f82cac1e4ddd3ad018227806b0c2288864acc"
+  },
+  "freetype": {
+    "version": "2.15.0",
+    "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.15.0.tar.xz",
+    "sha256": "93cd47eb719c325107f2d3cf087d06299e944c3b48a40b55537302304dea1dd5"
+  },
+  "fribidi": {
+    "version": "1.0.18",
+    "url": "https://github.com/fribidi/fribidi/releases/download/v1.0.18/fribidi-1.0.18.tar.xz",
+    "sha256": "1de5e8073d035388b71d0b2d452b1da1f8caeea8a7702997b401fe1b6250727f"
+  },
+  "harfbuzz": {
+    "version": "15.1.0",
+    "url": "https://github.com/harfbuzz/harfbuzz/releases/download/15.1.0/harfbuzz-15.1.0.tar.xz",
+    "sha256": "0fc7c565443a5f4be7da65ac5ee5bd737d9b158dc908708b7689a0a5796b0c8d"
   }
 }
